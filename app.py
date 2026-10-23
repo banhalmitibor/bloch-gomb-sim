@@ -137,31 +137,38 @@ st.sidebar.header("Kvantumkapuk")
 col3, col4 = st.sidebar.columns(2)
 
 # Gombok a kapuk alkalmazásához
-if col3.button("Hadamard kapu"):
+if col4.button("Hadamard kapu"):
     apply_or_record_gate("H", H_gate)
     
-if col4.button("Pauli-X kapu"):
+if col3.button("Pauli-X kapu"):
     apply_or_record_gate("X", X_gate)
 
-if col4.button("Pauli-Z kapu"):
+if col3.button("Pauli-Z kapu"):
     apply_or_record_gate("Z", Z_gate)
 
-if col4.button("Pauli-Y kapu"):
+if col3.button("Pauli-Y kapu"):
     apply_or_record_gate("Y", Y_gate)
 
-if col3.button("S fáziskapu"):
+if col4.button("S fáziskapu"):
     apply_or_record_gate("S", S_gate)
 
-if col3.button("T fáziskapu"):
+if col4.button("T fáziskapu"):
     apply_or_record_gate("T", T_gate)
 
-alpha_value = st.sidebar.number_input(
-    "Adja meg alpha értékét radiánban", 
-    value=0.0,      # Default value
-    step=0.1,       # Step size for the UI arrows
-    format="%.4f"   # Display formatting
+col5, col6,col7 = st.sidebar.columns([1,4,1])
+
+col6.markdown("<h5 style='text-align: center;'>Fázisszög (α)</h5>", unsafe_allow_html=True)
+
+alpha_value = col6.slider(
+"Fázisszög (α)", 
+    min_value=0, 
+    max_value=360, 
+    value=90, 
+    step=1,
+    format="%d°",
+    label_visibility = "collapsed"
 )
-if st.sidebar.button("Phase-Rotator kapu"):
+if col6.button("Fázisforgatás",use_container_width = True):
     phase_gate = PhaseRotator(alpha_value)
     apply_or_record_gate(f"P({alpha_value:.1f})", phase_gate)
   
