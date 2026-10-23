@@ -26,6 +26,13 @@ class PauliYGate(Gate):
     def __init__(self):
         self.matrix = np.array([[0, -1j], [1j, 0]], dtype = complex)
 
+class PhaseSGate(Gate):
+    def __init__(self):
+        self.matrix = np.array([[1,0], [0,1j]], dtype = complex)
+
+class PhaseTGate(Gate):
+    def __init__(self):
+        self.matrix = np.array([[1,0],[0,np.exp(1j*np.pi/4)]],dtype = complex)
 
 class PhaseRotator(Gate):
     def __init__(self, alpha):
@@ -87,7 +94,9 @@ if 'is_recording' not in st.session_state:
 H_gate = HadamardGate()
 X_gate = PauliXGate()
 Z_gate = PauliZGate()
-Y_gate = PauliYGate()   
+Y_gate = PauliYGate() 
+S_gate = PhaseSGate()
+T_gate = PhaseTGate()  
 
 # -- 3. FELHASZNÁLÓI FELÜLET (UI) --
 st.title("Bloch-gömb Szimulátor")
@@ -132,6 +141,12 @@ if st.sidebar.button("Pauli-Z kapu"):
 if st.sidebar.button("Pauli-Y kapu"):
     st.session_state.state = Y_gate.apply(st.session_state.state)
 
+if st.sidebar.button("S fáziskapu"):
+    st.session_state.state = S_gate.apply(st.session_state.state)
+
+if st.sidebar.button("T fáziskapu"):
+    st.session_state.state = T_gate.apply(st.session_state.state)
+
 alpha_value = st.sidebar.number_input(
     "Adja meg alpha értékét radiánban", 
     value=0.0,      # Default value
@@ -144,19 +159,30 @@ if st.sidebar.button("Phase-Rotator kapu"):
 
 # -- 4. VEKTOR KOORDINÁTÁINAK KISZÁMÍTÁSA --
 alpha, beta = st.session_state.state
+
+# Bloch-koordináták közvetlen kiszámítása (nincs arccos és np.angle hiba!)
+x = float(2 * np.real(np.conj(alpha) * beta))
+y = float(2 * np.imag(np.conj(alpha) * beta))
+z = float(np.abs(alpha)**2 - np.abs(beta)**2)
+
+# Lebegőpontos túlcsordulások védelme (-1 és 1 közé szorítás)
+x = np.clip(x, -1.0, 1.0)
+y = np.clip(y, -1.0, 1.0)
+z = np.clip(z, -1.0, 1.0)
+
+
+
 # Bloch-gömb koordináták konverziója (theta, phi)
-theta = 2 * np.arccos(np.abs(alpha))
-phi = np.angle(beta) - np.angle(alpha)
+#theta = 2 * np.arccos(np.abs(alpha))
+#phi = np.angle(beta) - np.angle(alpha)
 
 # Descartes-koordináták a 3D térhez
-x = np.sin(theta) * np.cos(phi)
-y = np.sin(theta) * np.sin(phi)
-z = np.cos(theta)
+#x = np.sin(theta) * np.cos(phi)
+#y = np.sin(theta) * np.sin(phi)
+#z = np.cos(theta)
 
 # -- 5. PLOTLY 3D MEGJELENÍTÉS --
 fig = go.Figure()
-
-
 
 # Halvány, átlátszó gömb hozzáadása
 u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:20j]
