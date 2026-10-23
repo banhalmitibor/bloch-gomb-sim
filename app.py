@@ -249,11 +249,17 @@ for vector_key, vector_value in st.session_state.vectors.items():
     x = np.clip(x, -1.0, 1.0)
     y = np.clip(y, -1.0, 1.0)
     z = np.clip(z, -1.0, 1.0)
-
+    if vector_key == st.session_state.active_vector:
+        st.write(f"**Aktív állapotvektor: {vector_key}** |ψ⟩ = {alpha:.2f}|0⟩ + {beta:.2f}|1⟩")
+        fig.add_trace(go.Scatter3d(x=[0, x], y=[0, y], z=[0, z], mode='lines+markers',
+                           line=dict(color=vector_value["color"], width=7),
+                           marker=dict(size=[0, 6], color=vector_value["color"]),name = f"Aktív: {vector_key}"))
+    else:
+         fig.add_trace(go.Scatter3d(x=[0, x], y=[0, y], z=[0, z], mode='lines+markers',
+                           line=dict(color=vector_value["color"], width=3),
+                           marker=dict(size=[0, 4], color=vector_value["color"]),name = vector_key))
 # Állapotvektor kirajzolása (egy vonal az origóból a kiszámolt x,y,z pontig)
-    fig.add_trace(go.Scatter3d(x=[0, x], y=[0, y], z=[0, z], mode='lines+markers',
-                           line=dict(color=vector_value["color"], width=5),
-                           marker=dict(size=[0, 5], color=vector_value["color"]),))
+
 
 # Tengelyek testreszabása
     fig.update_layout(scene=dict(
@@ -263,7 +269,5 @@ for vector_key, vector_value in st.session_state.vectors.items():
         margin=dict(l=0, r=0, b=0, t=0))
 
 
-# Pontos állapot kiírása
-    st.write(f"**{vector_key}** |ψ⟩ = {alpha:.2f}|0⟩ + {beta:.2f}|1⟩")
 
 st.plotly_chart(fig, use_container_width=True)
