@@ -10,6 +10,14 @@ class Gate:
     def apply(self, state):
         return np.dot(self.matrix, state)
 
+class HadamardGate(Gate):
+    def __init__(self):
+        self.matrix = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])
+
+class PauliXGate(Gate):
+    def __init__(self):
+        self.matrix = np.array([[0, 1], [1, 0]])
+
 class Chain(Gate):
     def __init__(self):
         self.matrixes = []
@@ -63,8 +71,8 @@ if 'state' not in st.session_state:
     st.session_state.state = np.array([1, 0], dtype=complex)
 
 # -- 2. KVANUMKAPUK (MÁTRIXOK) --
-H_gate = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])
-X_gate = np.array([[0, 1], [1, 0]])
+H_gate = HadamardGate()
+X_gate = PauliXGate()
 
 # -- 3. FELHASZNÁLÓI FELÜLET (UI) --
 st.title("Bloch-gömb Szimulátor")
