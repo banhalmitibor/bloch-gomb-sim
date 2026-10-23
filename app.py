@@ -162,8 +162,10 @@ alpha_value = col6.slider(
     format="%d°",
     label_visibility = "collapsed"
 )
+angle_rad = np.radians(alpha_value)
+
 if col6.button("Fázisforgatás",use_container_width = True):
-    st.session_state.state = PhaseRotator(alpha_value).apply(st.session_state.state)
+    st.session_state.state = PhaseRotator(angle_rad).apply(st.session_state.state)
   
 
 # -- 4. VEKTOR KOORDINÁTÁINAK KISZÁMÍTÁSA --
