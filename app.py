@@ -18,6 +18,14 @@ class PauliXGate(Gate):
     def __init__(self):
         self.matrix = np.array([[0, 1], [1, 0]])
 
+
+class PhaseRotator(Gate):
+    def __init__(self, alpha):
+        self.matrix = np.array([
+            [1, 0],
+            [0, np.exp(1j * alpha)]
+        ], dtype=complex)
+
 class Chain(Gate):
     def __init__(self):
         self.matrixes = []
