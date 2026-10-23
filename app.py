@@ -153,6 +153,8 @@ z = np.cos(theta)
 # -- 5. PLOTLY 3D MEGJELENÍTÉS --
 fig = go.Figure()
 
+
+
 # Halvány, átlátszó gömb hozzáadása
 u, v = np.mgrid[0:2*np.pi:30j, 0:np.pi:20j]
 sphere_x = np.cos(u)*np.sin(v)
