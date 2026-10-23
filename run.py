@@ -1,12 +1,19 @@
-import os
 import sys
-import subprocess
+import os
+from streamlit.web import cli as stcli
 
 def main():
-    # Megkeresi az app.py helyét
-    script_path = os.path.join(os.path.dirname(__file__), 'app.py')
-    # Elindítja a Streamlit szervert a háttérben
-    subprocess.Popen([sys.executable, "-m", "streamlit", "run", script_path])
+    # PyInstaller ideiglenes könyvtárának (MEIPASS) megkeresése
+    if getattr(sys, 'frozen', False):
+        dirname = sys._MEIPASS
+    else:
+        dirname = os.path.dirname(os.path.abspath(__file__))
+        
+    script_path = os.path.join(dirname, 'app.py')
+    
+    # Streamlit indítása közvetlenül a becsomagolt környezetből
+    sys.argv = ["streamlit", "run", script_path, "--global.developmentMode=false"]
+    sys.exit(stcli.main())
 
 if __name__ == '__main__':
     main()
