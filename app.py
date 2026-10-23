@@ -75,12 +75,6 @@ class Chain(Gate):
 
 
 
-
-
-
-
-
-
 # -- 1. ÁLLAPOTTÉR INICIALIZÁLÁSA --
 if 'state' not in st.session_state:
     # Kezdőállapot: |0>
@@ -108,6 +102,15 @@ if st.sidebar.button("Pauli-Z kapu"):
 
 if st.sidebar.button("Pauli-Y kapu"):
     st.session_state.state = Y_gate.apply(st.session_state.state)
+
+alpha_value = st.sidebar.number_input(
+    "Adja meg alpha értékét radiánban", 
+    value=0.0,      # Default value
+    step=0.1,       # Step size for the UI arrows
+    format="%.4f"   # Display formatting
+)
+if st.sidebar.button("Phase-Rotator kapu"):
+    st.session_state.state = PhaseRotator(alpha_value).apply(st.session_state.state)
 
 
 
