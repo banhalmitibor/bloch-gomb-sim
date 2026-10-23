@@ -90,16 +90,16 @@ st.sidebar.header("Kvantumkapuk")
 
 # Gombok a kapuk alkalmazásához
 if st.sidebar.button("Hadamard kapu"):
-    st.session_state.state = H_gate.appy(st.session_state.state)
+    st.session_state.state = H_gate.apply(st.session_state.state)
     
 if st.sidebar.button("Pauli-X kapu"):
-    st.session_state.state = X_gate.appy(st.session_state.state)
+    st.session_state.state = X_gate.apply(st.session_state.state)
 
 if st.sidebar.button("Pauli-Z kapu"):
-    st.session_state.state = Z_gate.appy(st.session_state.state)
+    st.session_state.state = Z_gate.apply(st.session_state.state)
 
 if st.sidebar.button("Pauli-Y kapu"):
-    st.session_state.state = Y_gate.appy(st.session_state.state)
+    st.session_state.state = Y_gate.apply(st.session_state.state)
 
 
 
