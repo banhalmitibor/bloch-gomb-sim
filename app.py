@@ -70,15 +70,18 @@ class Chain(Gate):
 
 
 
-
-
-
-
-
 # -- 1. ÁLLAPOTTÉR INICIALIZÁLÁSA --
 if 'state' not in st.session_state:
     # Kezdőállapot: |0>
     st.session_state.state = np.array([1, 0], dtype=complex)
+
+if 'custom_gates' not in st.session_state:
+    st.session_state.custom_gates = {}
+
+if 'is_recording' not in st.session_state:
+    st.session_state.is_recording = False
+    st.session_state.temp_chain = Chain()
+    st.session_state.temp_names = []
 
 # -- 2. KVANUMKAPUK (MÁTRIXOK) --
 H_gate = HadamardGate()
