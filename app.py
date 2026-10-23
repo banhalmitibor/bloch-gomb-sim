@@ -43,22 +43,28 @@ class PhaseRotator(Gate):
 
 class Chain(Gate):
     def __init__(self):
-        self.matrixes = []
+        self.gates = []
 
-    def addMatrix(self, mx):
-        self.matrixes.append(mx)
+    def addGate(self, gt):
+        self.gates.append(gt)
 
     def apply(self, state):
         mx = state
-        for matrix in self.matrixes:
-            mx = np.dot(matrix, mx)
+        for gate in self.gates:
+            mx = gate.apply(mx)
         return mx
 
 
 
 
-
-
+def apply_or_record_gate(name, gate_obj=None):
+    if st.session_state.is_recording:
+        st.session_state.temp_chain.addGate(gate_obj)
+        st.session_state.temp_names.append(name)
+        st.rerun()
+    else:
+        st.session_state.state = gate_obj.apply(st.session_state.state)
+    
 
 
 
@@ -132,22 +138,22 @@ col3, col4 = st.sidebar.columns(2)
 
 # Gombok a kapuk alkalmazásához
 if col3.button("Hadamard kapu"):
-    st.session_state.state = H_gate.apply(st.session_state.state)
+    apply_or_record_gate("H", H_gate)
     
 if col4.button("Pauli-X kapu"):
-    st.session_state.state = X_gate.apply(st.session_state.state)
+    apply_or_record_gate("X", X_gate)
 
 if col4.button("Pauli-Z kapu"):
-    st.session_state.state = Z_gate.apply(st.session_state.state)
+    apply_or_record_gate("Z", Z_gate)
 
 if col4.button("Pauli-Y kapu"):
-    st.session_state.state = Y_gate.apply(st.session_state.state)
+    apply_or_record_gate("Y", Y_gate)
 
 if col3.button("S fáziskapu"):
-    st.session_state.state = S_gate.apply(st.session_state.state)
+    apply_or_record_gate("S", S_gate)
 
 if col3.button("T fáziskapu"):
-    st.session_state.state = T_gate.apply(st.session_state.state)
+    apply_or_record_gate("T", T_gate)
 
 alpha_value = st.sidebar.number_input(
     "Adja meg alpha értékét radiánban", 
@@ -156,8 +162,39 @@ alpha_value = st.sidebar.number_input(
     format="%.4f"   # Display formatting
 )
 if st.sidebar.button("Phase-Rotator kapu"):
-    st.session_state.state = PhaseRotator(alpha_value).apply(st.session_state.state)
+    phase_gate = PhaseRotator(alpha_value)
+    apply_or_record_gate(f"P({alpha_value:.1f})", phase_gate)
   
+
+st.sidebar.divider()
+if not st.session_state.is_recording:
+    if st.sidebar.button("Új láncolt kapu rögzítése"):
+        st.session_state.is_recording = True
+        st.session_state.temp_chain = Chain()
+        st.session_state.temp_names = []
+        st.rerun()
+else:
+    st.sidebar.warning("Lánc rögzítése folyamatban...")
+    st.sidebar.write("**Jelenlegi lánc:**", " ➔ ".join(st.session_state.temp_names) if st.session_state.temp_names else "Üres")
+    
+    gate_name = st.sidebar.text_input("Új kapu neve:", value=f"Lánc {len(st.session_state.custom_gates) + 1}")
+    
+    col1, col2 = st.sidebar.columns(2)
+    if col1.button("Mentés"):
+        st.session_state.custom_gates[gate_name] = st.session_state.temp_chain
+        st.session_state.is_recording = False
+        st.rerun()
+    if col2.button("Mégse"):
+        st.session_state.is_recording = False
+        st.rerun()
+
+if st.session_state.custom_gates:
+    st.sidebar.divider()
+    st.sidebar.header("Saját láncolt kapuk")
+    for name, chain_gate in st.session_state.custom_gates.items():
+        if st.sidebar.button(name):
+            # Mivel a lánc maga is egy Gate, használhatjuk hozzá a segédfüggvényt!
+            apply_or_record_gate(name, chain_gate)
 
 # -- 4. VEKTOR KOORDINÁTÁINAK KISZÁMÍTÁSA --
 alpha, beta = st.session_state.state
