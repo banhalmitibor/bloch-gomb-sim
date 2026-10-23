@@ -90,7 +90,7 @@ if 'state' not in st.session_state:
 H_gate = HadamardGate()
 X_gate = PauliXGate()
 Z_gate = PauliZGate()
-Y_gate = PauliYGate()
+Y_gate = PauliYGate()   
 
 # -- 3. FELHASZNÁLÓI FELÜLET (UI) --
 st.title("Bloch-gömb Szimulátor")
@@ -109,10 +109,20 @@ if st.sidebar.button("Pauli-Z kapu"):
 if st.sidebar.button("Pauli-Y kapu"):
     st.session_state.state = Y_gate.apply(st.session_state.state)
 
-
+st.sidebar.header("Állapot beállítása")
 
 if st.sidebar.button("Visszaállítás |0>-ba"):
     st.session_state.state = np.array([1, 0], dtype=complex)    
+
+a = st.sidebar.number_input("a", min_value=0.0, max_value=1.0, value=1.0, step=0.01)
+b = st.sidebar.number_input("b", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
+if st.sidebar.button("Állapot beállítása"):
+    norm = np.sqrt(a**2 + b**2)
+    if norm > 0:
+        a /= norm
+        b /= norm
+    st.session_state.state = np.array([a, b], dtype=complex)
+
 
 # -- 4. VEKTOR KOORDINÁTÁINAK KISZÁMÍTÁSA --
 alpha, beta = st.session_state.state
