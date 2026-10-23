@@ -88,6 +88,32 @@ Y_gate = PauliYGate()
 
 # -- 3. FELHASZNÁLÓI FELÜLET (UI) --
 st.title("Bloch-gömb Szimulátor")
+
+st.sidebar.header("Kezdőállapot beállítása")
+
+col1, col2 = st.sidebar.columns(2)
+
+a_re = col1.number_input("α (Valós)", value=1.0, step=0.1)
+a_im = col2.number_input("α (Képzetes)", value=0.0, step=0.1)
+b_re = col1.number_input("β (Valós)", value=0.0, step=0.1)
+b_im = col2.number_input("β (Képzetes)", value=0.0, step=0.1)
+
+if st.sidebar.button("Állapot beállítása"):
+    alpha_val = complex(a_re, a_im)
+    beta_val = complex(b_re, b_im)
+    
+    norm = np.sqrt(abs(alpha_val)**2 + abs(beta_val)**2)
+    if norm > 0:
+        alpha_val /= norm
+        beta_val /= norm
+        st.session_state.state = np.array([alpha_val, beta_val], dtype=complex)
+
+
+if st.sidebar.button("Visszaállítás |0>-ba"):
+    st.session_state.state = np.array([1, 0], dtype=complex) 
+
+
+
 st.sidebar.header("Kvantumkapuk")
 
 # Gombok a kapuk alkalmazásához
@@ -111,21 +137,7 @@ alpha_value = st.sidebar.number_input(
 )
 if st.sidebar.button("Phase-Rotator kapu"):
     st.session_state.state = PhaseRotator(alpha_value).apply(st.session_state.state)
-
-
-
-if st.sidebar.button("Visszaállítás |0>-ba"):
-    st.session_state.state = np.array([1, 0], dtype=complex)    
-
-a = st.sidebar.number_input("a", min_value=0.0, max_value=1.0, value=1.0, step=0.01)
-b = st.sidebar.number_input("b", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
-if st.sidebar.button("Állapot beállítása"):
-    norm = np.sqrt(a**2 + b**2)
-    if norm > 0:
-        a /= norm
-        b /= norm
-    st.session_state.state = np.array([a, b], dtype=complex)
-
+  
 
 # -- 4. VEKTOR KOORDINÁTÁINAK KISZÁMÍTÁSA --
 alpha, beta = st.session_state.state
