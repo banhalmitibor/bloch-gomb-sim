@@ -125,23 +125,25 @@ if st.sidebar.button("Visszaállítás |0>-ba"):
 
 st.sidebar.header("Kvantumkapuk")
 
+col3, col4 = st.sidebar.columns(2)
+
 # Gombok a kapuk alkalmazásához
-if st.sidebar.button("Hadamard kapu"):
+if col3.button("Hadamard kapu"):
     st.session_state.state = H_gate.apply(st.session_state.state)
     
-if st.sidebar.button("Pauli-X kapu"):
+if col4.button("Pauli-X kapu"):
     st.session_state.state = X_gate.apply(st.session_state.state)
 
-if st.sidebar.button("Pauli-Z kapu"):
+if col4.button("Pauli-Z kapu"):
     st.session_state.state = Z_gate.apply(st.session_state.state)
 
-if st.sidebar.button("Pauli-Y kapu"):
+if col4.button("Pauli-Y kapu"):
     st.session_state.state = Y_gate.apply(st.session_state.state)
 
-if st.sidebar.button("S fáziskapu"):
+if col3.button("S fáziskapu"):
     st.session_state.state = S_gate.apply(st.session_state.state)
 
-if st.sidebar.button("T fáziskapu"):
+if col3.button("T fáziskapu"):
     st.session_state.state = T_gate.apply(st.session_state.state)
 
 alpha_value = st.sidebar.number_input(
