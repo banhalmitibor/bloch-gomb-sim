@@ -12,11 +12,19 @@ class Gate:
 
 class HadamardGate(Gate):
     def __init__(self):
-        self.matrix = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]])
+        self.matrix = (1/np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype = complex)
 
 class PauliXGate(Gate):
     def __init__(self):
-        self.matrix = np.array([[0, 1], [1, 0]])
+        self.matrix = np.array([[0, 1], [1, 0]], dtype = complex)
+
+class PauliZGate(Gate):
+    def __init__(self):
+        self.matrix = np.array([[1, 0], [0, -1]],dtype = complex)
+
+class PauliYGate(Gate):
+    def __init__(self):
+        self.matrix = np.array([[0, -1j], [1j, 0]], dtype = complex)
 
 
 class PhaseRotator(Gate):
@@ -81,18 +89,27 @@ if 'state' not in st.session_state:
 # -- 2. KVANUMKAPUK (MÁTRIXOK) --
 H_gate = HadamardGate()
 X_gate = PauliXGate()
+Z_gate = PauliZGate()
+Y_gate = PauliYGate()
 
 # -- 3. FELHASZNÁLÓI FELÜLET (UI) --
 st.title("Bloch-gömb Szimulátor")
 st.sidebar.header("Kvantumkapuk")
 
 # Gombok a kapuk alkalmazásához
-if st.sidebar.button("Hadamard (H) kapu"):
-    st.session_state.state = np.dot(H_gate, st.session_state.state)
-    print("8=====================================D")
+if st.sidebar.button("Hadamard kapu"):
+    st.session_state.state = H_gate.apply(st.session_state.state)
+    
+if st.sidebar.button("Pauli-X kapu"):
+    st.session_state.state = X_gate.apply(st.session_state.state)
 
-if st.sidebar.button("Pauli-X (NOT) kapu"):
-    st.session_state.state = np.dot(X_gate, st.session_state.state)
+if st.sidebar.button("Pauli-Z kapu"):
+    st.session_state.state = Z_gate.apply(st.session_state.state)
+
+if st.sidebar.button("Pauli-Y kapu"):
+    st.session_state.state = Y_gate.apply(st.session_state.state)
+
+
 
 if st.sidebar.button("Visszaállítás |0>-ba"):
     st.session_state.state = np.array([1, 0], dtype=complex)    
