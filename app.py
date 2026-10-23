@@ -55,38 +55,31 @@ class Chain(Gate):
         return mx
 
 
-
-
 def apply_or_record_gate(name, gate_obj=None):
     if st.session_state.is_recording:
         st.session_state.temp_chain.addGate(gate_obj)
         st.session_state.temp_names.append(name)
         st.rerun()
     else:
-        st.session_state.state = gate_obj.apply(st.session_state.state)
+        active_vc = st.session_state.active_vector
+        current_state = st.session_state.vectors[active_vc]["state"]
+        st.session_state.vectors[active_vc]["state"] = gate_obj.apply(current_state)
+
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # -- 1. ÁLLAPOTTÉR INICIALIZÁLÁSA --
-if 'state' not in st.session_state:
-    # Kezdőállapot: |0>
-    st.session_state.state = np.array([1, 0], dtype=complex)
+colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow','violet', 'lime', 'pink', 'teal', 'brown', 'gray', 'olive', 'navy']
+
+
+
+if 'vectors' not in st.session_state:
+    st.session_state.vectors = {
+        "vc1": {
+            "state": np.array([1,0],dtype=complex),
+            "color": colors[0]
+        }
+    }
+    st.session_state.active_vector = "vc1"
+    st.session_state.vector_count = 1
 
 if 'custom_gates' not in st.session_state:
     st.session_state.custom_gates = {}
@@ -107,6 +100,30 @@ T_gate = PhaseTGate()
 # -- 3. FELHASZNÁLÓI FELÜLET (UI) --
 st.title("Bloch-gömb Szimulátor")
 
+st.sidebar.header("Állapotvektorok kezelése")
+
+col8, col9 = st.sidebar.columns(2)
+
+
+selected_vc = st.sidebar.selectbox(
+    "Vektor kiválasztása:",
+    options = list(st.session_state.vectors.keys()),
+    index = list(st.session_state.vectors.keys()).index(st.session_state.active_vector)
+)
+st.session_state.active_vector = selected_vc
+
+if st.sidebar.button("Új állapotvektor:"):
+    st.session_state.vector_count += 1
+
+    uj_vektor = f"vc{st.session_state.vector_count}"
+
+    st.session_state.vectors[uj_vektor] = {
+        "state" : np.array([1,0],dtype = complex),
+        "color" : colors[(st.session_state.vector_count-1) % len(colors)]
+    }
+    st.session_state.active_vector = uj_vektor
+    st.rerun()
+
 st.sidebar.header("Kezdőállapot beállítása")
 
 col1, col2 = st.sidebar.columns(2)
@@ -124,11 +141,11 @@ if st.sidebar.button("Állapot beállítása"):
     if norm > 0:
         alpha_val /= norm
         beta_val /= norm
-        st.session_state.state = np.array([alpha_val, beta_val], dtype=complex)
+        st.session_state.vectors[st.session_state.active_vector]["state"] = np.array([alpha_val, beta_val], dtype=complex)
 
 
 if st.sidebar.button("Visszaállítás |0>-ba"):
-    st.session_state.state = np.array([1, 0], dtype=complex) 
+    st.session_state.vectors[st.session_state.active_vector]["state"] = np.array([1, 0], dtype=complex) 
 
 
 
@@ -206,28 +223,8 @@ if st.session_state.custom_gates:
             apply_or_record_gate(name, chain_gate)
 
 # -- 4. VEKTOR KOORDINÁTÁINAK KISZÁMÍTÁSA --
-alpha, beta = st.session_state.state
-
-# Bloch-koordináták közvetlen kiszámítása (nincs arccos és np.angle hiba!)
-x = float(2 * np.real(np.conj(alpha) * beta))
-y = float(2 * np.imag(np.conj(alpha) * beta))
-z = float(np.abs(alpha)**2 - np.abs(beta)**2)
-
-# Lebegőpontos túlcsordulások védelme (-1 és 1 közé szorítás)
-x = np.clip(x, -1.0, 1.0)
-y = np.clip(y, -1.0, 1.0)
-z = np.clip(z, -1.0, 1.0)
 
 
-
-# Bloch-gömb koordináták konverziója (theta, phi)
-#theta = 2 * np.arccos(np.abs(alpha))
-#phi = np.angle(beta) - np.angle(alpha)
-
-# Descartes-koordináták a 3D térhez
-#x = np.sin(theta) * np.cos(phi)
-#y = np.sin(theta) * np.sin(phi)
-#z = np.cos(theta)
 
 # -- 5. PLOTLY 3D MEGJELENÍTÉS --
 fig = go.Figure()
@@ -239,19 +236,34 @@ sphere_y = np.sin(u)*np.sin(v)
 sphere_z = np.cos(v)
 fig.add_trace(go.Surface(x=sphere_x, y=sphere_y, z=sphere_z, opacity=0.1, showscale=False))
 
+
+for vector_key, vector_value in st.session_state.vectors.items():
+    alpha, beta = st.session_state.vectors[vector_key]["state"]
+
+# Bloch-koordináták közvetlen kiszámítása (nincs arccos és np.angle hiba!)
+    x = float(2 * np.real(np.conj(alpha) * beta))
+    y = float(2 * np.imag(np.conj(alpha) * beta))
+    z = float(np.abs(alpha)**2 - np.abs(beta)**2)
+
+# Lebegőpontos túlcsordulások védelme (-1 és 1 közé szorítás)
+    x = np.clip(x, -1.0, 1.0)
+    y = np.clip(y, -1.0, 1.0)
+    z = np.clip(z, -1.0, 1.0)
+
 # Állapotvektor kirajzolása (egy vonal az origóból a kiszámolt x,y,z pontig)
-fig.add_trace(go.Scatter3d(x=[0, x], y=[0, y], z=[0, z], mode='lines+markers',
-                           line=dict(color='red', width=5),
-                           marker=dict(size=[0, 5], color='red')))
+    fig.add_trace(go.Scatter3d(x=[0, x], y=[0, y], z=[0, z], mode='lines+markers',
+                           line=dict(color=vector_value["color"], width=5),
+                           marker=dict(size=[0, 5], color=vector_value["color"]),))
 
 # Tengelyek testreszabása
-fig.update_layout(scene=dict(
-    xaxis=dict(range=[-1, 1], title='X'),
-    yaxis=dict(range=[-1, 1], title='Y'),
-    zaxis=dict(range=[-1, 1], title='Z')),
-    margin=dict(l=0, r=0, b=0, t=0))
+    fig.update_layout(scene=dict(
+        xaxis=dict(range=[-1, 1], title='X'),
+        yaxis=dict(range=[-1, 1], title='Y'),
+        zaxis=dict(range=[-1, 1], title='Z')),
+        margin=dict(l=0, r=0, b=0, t=0))
 
-st.plotly_chart(fig, use_container_width=True)
 
 # Pontos állapot kiírása
-st.write(f"**Aktuális állapotvektor:** |ψ⟩ = {alpha:.2f}|0⟩ + {beta:.2f}|1⟩")
+    st.write(f"**{vector_key}** |ψ⟩ = {alpha:.2f}|0⟩ + {beta:.2f}|1⟩")
+
+st.plotly_chart(fig, use_container_width=True)
