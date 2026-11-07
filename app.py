@@ -34,11 +34,25 @@ class PhaseTGate(Gate):
     def __init__(self):
         self.matrix = np.array([[1,0],[0,np.exp(1j*np.pi/4)]],dtype = complex)
 
-class PhaseRotator(Gate):
+class RzGate(Gate):
     def __init__(self, alpha):
         self.matrix = np.array([
             [1, 0],
             [0, np.exp(1j * alpha)]
+        ], dtype=complex)
+
+class RxGate(Gate):
+    def __init__(self, theta):
+        self.matrix = np.array([
+            [np.cos(theta/2), -1j * np.sin(theta/2)],
+            [-1j * np.sin(theta/2), np.cos(theta/2)]
+        ], dtype=complex)
+
+class RyGate(Gate):
+    def __init__(self, theta):
+        self.matrix = np.array([
+            [np.cos(theta/2), -np.sin(theta/2)],
+            [np.sin(theta/2), np.cos(theta/2)]
         ], dtype=complex)
 
 class Chain(Gate):
@@ -172,25 +186,23 @@ if col4.button("S fáziskapu"):
 if col4.button("T fáziskapu"):
     apply_or_record_gate("T", T_gate)
 
-col5, col6,col7 = st.sidebar.columns([1,4,1])
+st.sidebar.divider()
 
-col6.markdown("<h5 style='text-align: center;'>Fázisszög (α)</h5>", unsafe_allow_html=True)
+st.sidebar.header("Tengely körüli forgatások")
+# Vízszintes rádiógombok a tengely kiválasztásához
+tengely = st.sidebar.radio("Tengely kiválasztása", ["X tengely (Rx)", "Y tengely (Ry)", "Z tengely (Rz)"], horizontal=True, label_visibility="collapsed")
 
-alpha_value = col6.slider(
-"Fázisszög (α)", 
-    min_value=0, 
-    max_value=360, 
-    value=90, 
-    step=1,
-    format="%d°",
-    label_visibility = "collapsed"
-)
-angle_rad = np.radians(alpha_value)
+# Egyetlen csúszka a szögnek
+szog = st.sidebar.slider("Forgatási szög", min_value=0, max_value=360, value=90, step=1, format="%d°", label_visibility="collapsed")
 
-if col6.button("Fázisforgatás",use_container_width = True):
-    phase_gate = PhaseRotator(angle_rad)
-    apply_or_record_gate(f"P({alpha_value:.1f})", phase_gate)
-  
+if st.sidebar.button("Forgatás alkalmazása", use_container_width=True):
+    rad = np.radians(szog)
+    if "X" in tengely:
+        apply_or_record_gate(f"Rx({szog}°)", RxGate(rad))
+    elif "Y" in tengely:
+        apply_or_record_gate(f"Ry({szog}°)", RyGate(rad))
+    else:
+        apply_or_record_gate(f"Rz({szog}°)", RzGate(rad)) 
 
 st.sidebar.divider()
 if not st.session_state.is_recording:
