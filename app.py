@@ -2,13 +2,16 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-
+# A kvantumkapuk alaposztálya, ettől örökölve fogjuk definiálni a konkrét kapukat.
 class Gate:
     def __init__(self):
         self.matrix = None
 
     def apply(self, state):
         return np.dot(self.matrix, state)
+
+    
+# Hadamard, Pauli-X, Pauli-Z, Pauli-Y, S, T, Rz, Rx, Ry kapuk definiálása
 
 class HadamardGate(Gate):
     def __init__(self):
@@ -55,20 +58,24 @@ class RyGate(Gate):
             [np.sin(theta/2), np.cos(theta/2)]
         ], dtype=complex)
 
+# Láncolt kapu osztály, amely több Gate objektumot tartalmazhat és alkalmazhatja őket sorban.
+
 class Chain(Gate):
     def __init__(self):
         self.gates = []
 
+    # A láncolt kapuhoz új kapu hozzáadása
     def addGate(self, gt):
         self.gates.append(gt)
 
+    # A láncba lévő kapuk alkalmazása a bemeneti állapotra
     def apply(self, state):
         mx = state
         for gate in self.gates:
             mx = gate.apply(mx)
         return mx
 
-
+# Segédfüggvény a kapuk alkalmazására vagy rögzítésére a láncolt kapuhoz (session_state.is_recording  == láncolás aktív)
 def apply_or_record_gate(name, gate_obj=None):
     if st.session_state.is_recording:
         st.session_state.temp_chain.addGate(gate_obj)
@@ -80,11 +87,11 @@ def apply_or_record_gate(name, gate_obj=None):
         st.session_state.vectors[active_vc]["state"] = gate_obj.apply(current_state)
 
     
-# -- 1. ÁLLAPOTTÉR INICIALIZÁLÁSA --
+# Állapotvektorok lehetséges színeinek a listája
 colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow','violet', 'lime', 'pink', 'teal', 'brown', 'gray', 'olive', 'navy']
 
 
-
+# Állapottér inicializálása a Streamlit session_state-ben, ha még nem létezik
 if 'vectors' not in st.session_state:
     st.session_state.vectors = {
         "vc1": {
@@ -103,7 +110,7 @@ if 'is_recording' not in st.session_state:
     st.session_state.temp_chain = Chain()
     st.session_state.temp_names = []
 
-# -- 2. KVANUMKAPUK (MÁTRIXOK) --
+# Kvantumkapuk példányosítása
 H_gate = HadamardGate()
 X_gate = PauliXGate()
 Z_gate = PauliZGate()
@@ -111,14 +118,17 @@ Y_gate = PauliYGate()
 S_gate = PhaseSGate()
 T_gate = PhaseTGate()  
 
-# -- 3. FELHASZNÁLÓI FELÜLET (UI) --
+# Cím és oldalsáv beállításai
+
 st.title("Bloch-gömb Szimulátor")
 
+
+# Állapotvektorok kezelése UI
 st.sidebar.header("Állapotvektorok kezelése")
 
 col8, col9 = st.sidebar.columns(2)
 
-
+# Váltás az állapotvektorok kijelölése közt
 selected_vc = st.sidebar.selectbox(
     "Vektor kiválasztása:",
     options = list(st.session_state.vectors.keys()),
@@ -126,6 +136,7 @@ selected_vc = st.sidebar.selectbox(
 )
 st.session_state.active_vector = selected_vc
 
+# Új állapotvektor hozzáadása
 if st.sidebar.button("Új állapotvektor:"):
     st.session_state.vector_count += 1
 
@@ -138,15 +149,18 @@ if st.sidebar.button("Új állapotvektor:"):
     st.session_state.active_vector = uj_vektor
     st.rerun()
 
+# Kezdőállapot beállítása UI
 st.sidebar.header("Kezdőállapot beállítása")
 
 col1, col2 = st.sidebar.columns(2)
 
+# Lehetséges értékek beállítása 
 a_re = col1.number_input("α (Valós)", value=1.0, step=0.1)
 a_im = col2.number_input("α (Képzetes)", value=0.0, step=0.1)
 b_re = col1.number_input("β (Valós)", value=0.0, step=0.1)
 b_im = col2.number_input("β (Képzetes)", value=0.0, step=0.1)
 
+# A beállított értékek normalizálása és az állapotvektor frissítése
 if st.sidebar.button("Állapot beállítása"):
     alpha_val = complex(a_re, a_im)
     beta_val = complex(b_re, b_im)
@@ -157,12 +171,12 @@ if st.sidebar.button("Állapot beállítása"):
         beta_val /= norm
         st.session_state.vectors[st.session_state.active_vector]["state"] = np.array([alpha_val, beta_val], dtype=complex)
 
-
+# Az állapotvektor visszaállítása |0>-ba 
 if st.sidebar.button("Visszaállítás |0>-ba"):
     st.session_state.vectors[st.session_state.active_vector]["state"] = np.array([1, 0], dtype=complex) 
 
 
-
+# Kvantumkapuk UI
 st.sidebar.header("Kvantumkapuk")
 
 col3, col4 = st.sidebar.columns(2)
@@ -188,23 +202,27 @@ if col4.button("T fáziskapu"):
 
 st.sidebar.divider()
 
+# A forgatási szög és tengely kiválasztása a forgatási kapukhoz
 st.sidebar.header("Tengely körüli forgatások")
-# Vízszintes rádiógombok a tengely kiválasztásához
-tengely = st.sidebar.radio("Tengely kiválasztása", ["X tengely (Rx)", "Y tengely (Ry)", "Z tengely (Rz)"], horizontal=True, label_visibility="collapsed")
+axis = st.sidebar.radio("Tengely kiválasztása", ["X tengely (Rx)", "Y tengely (Ry)", "Z tengely (Rz)"], horizontal=True, label_visibility="collapsed")
 
-# Egyetlen csúszka a szögnek
-szog = st.sidebar.slider("Forgatási szög", min_value=0, max_value=360, value=90, step=1, format="%d°", label_visibility="collapsed")
+angle = st.sidebar.slider("Forgatási szög", min_value=0, max_value=360, value=90, step=1, format="%d°", label_visibility="collapsed")
 
 if st.sidebar.button("Forgatás alkalmazása", use_container_width=True):
-    rad = np.radians(szog)
-    if "X" in tengely:
-        apply_or_record_gate(f"Rx({szog}°)", RxGate(rad))
-    elif "Y" in tengely:
-        apply_or_record_gate(f"Ry({szog}°)", RyGate(rad))
+    rad = np.radians(angle)
+    if "X" in axis:
+        apply_or_record_gate(f"Rx({angle}°)", RxGate(rad))
+    elif "Y" in axis:
+        apply_or_record_gate(f"Ry({angle}°)", RyGate(rad))
     else:
-        apply_or_record_gate(f"Rz({szog}°)", RzGate(rad)) 
+        apply_or_record_gate(f"Rz({angle}°)", RzGate(rad)) 
 
 st.sidebar.divider()
+
+# Láncolt kapuk kezelése UI
+st.sidebar.header("Láncolt kapuk kezelése")
+
+# Láncolt kapu rögzítése és mentése
 if not st.session_state.is_recording:
     if st.sidebar.button("Új láncolt kapu rögzítése"):
         st.session_state.is_recording = True
@@ -214,10 +232,13 @@ if not st.session_state.is_recording:
 else:
     st.sidebar.warning("Lánc rögzítése folyamatban...")
     st.sidebar.write("**Jelenlegi lánc:**", " ➔ ".join(st.session_state.temp_names) if st.session_state.temp_names else "Üres")
-    
+
+    # A rögzített kapuk nevének megadása
     gate_name = st.sidebar.text_input("Új kapu neve:", value=f"Lánc {len(st.session_state.custom_gates) + 1}")
     
     col1, col2 = st.sidebar.columns(2)
+
+    # Gombok a láncolt kapu mentéséhez vagy elvetéséhez
     if col1.button("Mentés"):
         st.session_state.custom_gates[gate_name] = st.session_state.temp_chain
         st.session_state.is_recording = False
@@ -226,19 +247,16 @@ else:
         st.session_state.is_recording = False
         st.rerun()
 
+
 if st.session_state.custom_gates:
     st.sidebar.divider()
     st.sidebar.header("Saját láncolt kapuk")
     for name, chain_gate in st.session_state.custom_gates.items():
         if st.sidebar.button(name):
-            # Mivel a lánc maga is egy Gate, használhatjuk hozzá a segédfüggvényt!
+            # (A lánc maga is egy Gate objektum, így közvetlenül alkalmazható)
             apply_or_record_gate(name, chain_gate)
 
-# -- 4. VEKTOR KOORDINÁTÁINAK KISZÁMÍTÁSA --
-
-
-
-# -- 5. PLOTLY 3D MEGJELENÍTÉS --
+# Megjelenítés plotly segítségével
 fig = go.Figure()
 
 # Halvány, átlátszó gömb hozzáadása
@@ -248,11 +266,13 @@ sphere_y = np.sin(u)*np.sin(v)
 sphere_z = np.cos(v)
 fig.add_trace(go.Surface(x=sphere_x, y=sphere_y, z=sphere_z, opacity=0.1, showscale=False))
 
+# Állapotvektorok kirajzolása a Bloch-gömbön
 
+# Alfa és béta komponensek kinyerése az állapotvektorokból
 for vector_key, vector_value in st.session_state.vectors.items():
     alpha, beta = st.session_state.vectors[vector_key]["state"]
 
-# Bloch-koordináták közvetlen kiszámítása (nincs arccos és np.angle hiba!)
+# Bloch-koordináták kiszámítása az állapotvektorból
     x = float(2 * np.real(np.conj(alpha) * beta))
     y = float(2 * np.imag(np.conj(alpha) * beta))
     z = float(np.abs(alpha)**2 - np.abs(beta)**2)
@@ -261,6 +281,8 @@ for vector_key, vector_value in st.session_state.vectors.items():
     x = np.clip(x, -1.0, 1.0)
     y = np.clip(y, -1.0, 1.0)
     z = np.clip(z, -1.0, 1.0)
+    
+# Állapotvektorok kirajzolása a Bloch-gömbön, az aktív vektort vastagabb vonallal és nagyobb ponttal jelöljük
     if vector_key == st.session_state.active_vector:
         st.write(f"**Aktív állapotvektor: {vector_key}** |ψ⟩ = {alpha:.2f}|0⟩ + {beta:.2f}|1⟩")
         fig.add_trace(go.Scatter3d(x=[0, x], y=[0, y], z=[0, z], mode='lines+markers',
@@ -270,8 +292,6 @@ for vector_key, vector_value in st.session_state.vectors.items():
          fig.add_trace(go.Scatter3d(x=[0, x], y=[0, y], z=[0, z], mode='lines+markers',
                            line=dict(color=vector_value["color"], width=3),
                            marker=dict(size=[0, 4], color=vector_value["color"]),name = vector_key))
-# Állapotvektor kirajzolása (egy vonal az origóból a kiszámolt x,y,z pontig)
-
 
 # Tengelyek testreszabása
     fig.update_layout(scene=dict(
@@ -280,6 +300,5 @@ for vector_key, vector_value in st.session_state.vectors.items():
         zaxis=dict(range=[-1, 1], title='Z')),
         margin=dict(l=0, r=0, b=0, t=0))
 
-
-
+# A Bloch-gömb megjelenítése a Streamlit alkalmazásban
 st.plotly_chart(fig, use_container_width=True)
